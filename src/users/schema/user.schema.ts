@@ -18,6 +18,9 @@ export class User {
 
   @Prop()
   roles: Role[];
+
+  @Prop({ type: [{ access_token: String }] }) // Define token as a nested array of objects
+  tokens: { access_token: string }[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

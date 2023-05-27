@@ -1,42 +1,87 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { User } from 'src/users/schema/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UsersService } from 'src/users/users.service';
+import { JwtService } from '@nestjs/jwt';
+import { SanitizeUserDto } from 'src/users/dto/sanitize-user.dto';
+import { LoginUserDto } from 'src/users/dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly usersModel: Model<User>,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
     try {
       // Save user details and hash password
       const { password, email, name } = createUserDto;
-      const hashedPassword = this.hashPassword(password);
-      const newUser = new this.usersModel({
+      const hashedPassword = await this.hashPassword(password);
+      const newUser = await this.usersService.createUser({
         name,
-        email,
         hashedPassword,
+        email,
       });
-      return await newUser.save();
+      //gen auth token
+      const token = await this.generateAuthToken(newUser['_id'], newUser.roles);
+      //sanitize to remove pwd
+      const finalObj = this.usersService.sanitizeUserObj(newUser, token);
+      return finalObj;
     } catch (error) {
+      //   console.log(error);
       if (
         error.code == 11000 &&
         error.keyPattern &&
         error.keyPattern.email == 1
-      )
+      ) {
         throw new ConflictException('Email already exists');
+      } else {
+        throw new BadRequestException();
+      }
     }
   }
+
+  async loginUser(
+    loginUserDto: LoginUserDto,
+  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
+    const { email, password } = loginUserDto;
+    try {
+      const existingUser = await this.usersService.findByCredentials(
+        email,
+        password,
+      );
+      const { roles } = existingUser;
+      const _id = existingUser['_id'];
+      const token = await this.generateAuthToken(_id, roles);
+      const finalObj = this.usersService.sanitizeUserObj(existingUser, token);
+      return finalObj;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // Utility methods
 
   async hashPassword(plaintext: string): Promise<string> {
     return await bcrypt.hash(plaintext, 9);
   }
 
-  async generateAuthToken() {
-    //
+  async generateAuthToken(_id, roles) {
+    const user = await this.usersModel.findById(_id);
+    const token = await this.jwtService.signAsync({ sub: _id, role: roles });
+    user.tokens = user.tokens.concat({ access_token: token });
+    await user.save();
+    return token;
   }
 }
