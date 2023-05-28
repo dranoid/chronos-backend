@@ -67,7 +67,8 @@ export class AuthService {
       const finalObj = this.usersService.sanitizeUserObj(existingUser, token);
       return finalObj;
     } catch (error) {
-      console.log(error);
+      // console.log(error);
+      throw new BadRequestException();
     }
   }
 

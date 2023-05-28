@@ -2,7 +2,6 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { CreateUserDto } from './users/dto/create-user.dto';
 import { LoginUserDto } from './users/dto/login-user.dto';
-import { SanitizeUserDto } from './users/dto/sanitize-user.dto';
 import { SerializedUser } from './users/interfaces/user.interface';
 
 @Controller()

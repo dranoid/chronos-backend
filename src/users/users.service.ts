@@ -4,6 +4,8 @@ import {
   Inject,
   Scope,
   UnauthorizedException,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
@@ -14,6 +16,7 @@ import { plainToClass } from '@nestjs/class-transformer';
 import * as bcrypt from 'bcrypt';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable({ scope: Scope.REQUEST }) // This allows the request object to be accessible accross the service
 export class UsersService {
@@ -33,6 +36,18 @@ export class UsersService {
     return newUser;
   }
 
+  async getUser(id: string): Promise<SerializedUser> {
+    try {
+      const user = await this.usersModel.findById(id);
+      if (!user) {
+        throw new NotFoundException();
+      }
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
   async getUserProfile(): Promise<SerializedUser> {
     const { _id } = this.req['user'];
     try {
@@ -42,7 +57,43 @@ export class UsersService {
       }
       return this.sanitizeNoToken(user);
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async updateUserProfile(
+    updateUserDto: UpdateUserDto,
+  ): Promise<SerializedUser> {
+    const { _id } = this.req['user'];
+    console.log('here');
+    try {
+      const hash = await bcrypt.hash(updateUserDto.password, 9);
+      console.log(hash);
+      updateUserDto.password = hash;
+      const user = await this.usersModel.findByIdAndUpdate(_id, updateUserDto, {
+        new: true,
+      });
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
+  async deleteUser(): Promise<SerializedUser> {
+    const { _id } = this.req['user'];
+    try {
+      const user = await this.usersModel.findByIdAndDelete(_id);
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
     }
   }
 
@@ -53,6 +104,7 @@ export class UsersService {
     }
     const isMatch = await bcrypt.compare(password, user.password);
 
+    console.log(isMatch, password, user.password);
     if (!isMatch) {
       throw new BadRequestException('Incorrect details!');
     }
