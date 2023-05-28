@@ -26,11 +26,12 @@ export class UsersService {
   ) {}
 
   async createUser({ name, email, hashedPassword }): Promise<User> {
+    email = email.toLowerCase();
     const newUser = new this.usersModel({
       name,
       email,
       password: hashedPassword,
-      roles: [Role.USER],
+      roles: [Role.ADMIN],
     });
     await newUser.save();
     return newUser;
@@ -91,6 +92,35 @@ export class UsersService {
         throw new UnauthorizedException();
       }
 
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async logOut() {
+    const { _id } = this.req['user'];
+    const access_token = this.req['access_token'];
+    try {
+      const user = await this.usersModel.findOneAndUpdate(
+        { _id },
+        { $pull: { tokens: { access_token } } },
+        { new: true },
+      );
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async logOutAll() {
+    const { _id } = this.req['user'];
+    try {
+      const user = await this.usersModel.findOneAndUpdate(
+        { _id },
+        { $set: { tokens: [] } },
+        { new: true },
+      );
       return this.sanitizeNoToken(user);
     } catch (error) {
       throw new InternalServerErrorException();

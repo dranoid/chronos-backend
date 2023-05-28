@@ -1,10 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Product } from 'src/products/interfaces/product.interface';
+import { IProduct } from 'src/products/interfaces/product.interface';
 import { Role } from '../entities/role.enum';
 import { Document } from 'mongoose';
-import { Exclude } from '@nestjs/class-transformer';
-
-// TODO seriallize schema or output
 
 @Schema()
 export class User extends Document {
@@ -18,7 +15,7 @@ export class User extends Document {
   password: string;
 
   @Prop()
-  order: Product[];
+  order: IProduct[];
 
   @Prop()
   roles: Role[];

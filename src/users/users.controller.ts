@@ -47,6 +47,18 @@ export class UsersController {
     return this.usersService.deleteUser();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('me/logout')
+  logOutUser() {
+    return this.usersService.logOut();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/logout')
+  logOutAllUserSessions() {
+    return this.usersService.logOutAll();
+  }
+
   // Admin
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

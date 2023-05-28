@@ -58,7 +58,7 @@ export class AuthService {
     const { email, password } = loginUserDto;
     try {
       const existingUser = await this.usersService.findByCredentials(
-        email,
+        email.toLowerCase(),
         password,
       );
       const { roles } = existingUser;
