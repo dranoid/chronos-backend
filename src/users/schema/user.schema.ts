@@ -1,9 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Product } from 'src/products/interfaces/product.interface';
 import { Role } from '../entities/role.enum';
+import { Document } from 'mongoose';
+import { Exclude } from '@nestjs/class-transformer';
+
+// TODO seriallize schema or output
 
 @Schema()
-export class User {
+export class User extends Document {
   @Prop({ required: true })
   name: string;
 

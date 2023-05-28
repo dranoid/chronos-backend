@@ -10,8 +10,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { SanitizeUserDto } from 'src/users/dto/sanitize-user.dto';
 import { LoginUserDto } from 'src/users/dto/login-user.dto';
+import { SerializedUser } from 'src/users/interfaces/user.interface';
 
 @Injectable()
 export class AuthService {
@@ -23,7 +23,7 @@ export class AuthService {
 
   async createUser(
     createUserDto: CreateUserDto,
-  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
+  ): Promise<{ user: SerializedUser; access_token: string }> {
     try {
       // Save user details and hash password
       const { password, email, name } = createUserDto;
@@ -54,7 +54,7 @@ export class AuthService {
 
   async loginUser(
     loginUserDto: LoginUserDto,
-  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
+  ): Promise<{ user: SerializedUser; access_token: string }> {
     const { email, password } = loginUserDto;
     try {
       const existingUser = await this.usersService.findByCredentials(

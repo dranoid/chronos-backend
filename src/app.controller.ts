@@ -3,6 +3,7 @@ import { AuthService } from './auth/auth.service';
 import { CreateUserDto } from './users/dto/create-user.dto';
 import { LoginUserDto } from './users/dto/login-user.dto';
 import { SanitizeUserDto } from './users/dto/sanitize-user.dto';
+import { SerializedUser } from './users/interfaces/user.interface';
 
 @Controller()
 export class AppController {
@@ -11,13 +12,13 @@ export class AppController {
   @Post('signup')
   signupUser(
     @Body() createUserDto: CreateUserDto,
-  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
+  ): Promise<{ user: SerializedUser; access_token: string }> {
     return this.authService.createUser(createUserDto);
   }
   @Post('login')
   loginUser(
     @Body() loginUserDto: LoginUserDto,
-  ): Promise<{ user: SanitizeUserDto; access_token: string }> {
+  ): Promise<{ user: SerializedUser; access_token: string }> {
     return this.authService.loginUser(loginUserDto);
   }
 }

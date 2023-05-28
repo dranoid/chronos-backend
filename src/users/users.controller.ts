@@ -6,31 +6,32 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from './interfaces/user.interface';
-import { CreateUserDto } from './dto/create-user.dto';
+import { SerializedUser } from './interfaces/user.interface';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
+import { Role } from './entities/role.enum';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // Admin
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get()
-  getAllUsers(): Promise<User[]> {
+  getAllUsers(): Promise<SerializedUser[]> {
     return this.usersService.getAllUsers();
   }
 
-  // @Post()
-  // signupUser(@Body() createUserDto: CreateUserDto): Promise<User> {
-  //   return this.usersService.createUser(createUserDto);
-  // }
-
-  @Post()
-  loginUser() {}
-
+  @UseGuards(JwtAuthGuard)
   @Get('me')
-  getUserProfile() {}
+  getUserProfile() {
+    return this.usersService.getUserProfile();
+  }
 
   @Put('me')
   updateUserProfile() {}
