@@ -9,6 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './schema/products.schema';
+import { OrderProductDto } from './dto/order-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -71,5 +72,42 @@ export class ProductsService {
     } catch (e) {
       throw new InternalServerErrorException();
     }
+  }
+
+  async getProductsByIds(productIds: string[]): Promise<Product[]> {
+    const products = await this.productModel.find({ _id: { $in: productIds } });
+    return products;
+  }
+
+  async orderValidation(orderProductDto: OrderProductDto[]) {
+    // Fetch products from the database
+    const productIds = orderProductDto.map(
+      (orderProduct) => orderProduct.product,
+    );
+    const products = await this.productModel.find({ _id: { $in: productIds } });
+
+    const updatedOrders = [];
+    for (const orderProduct of orderProductDto) {
+      const product = products.find(
+        (p) => p['_id'].toString() === orderProduct.product,
+      );
+
+      if (!product) {
+        throw new Error(`Product '${orderProduct.product}' not found`);
+      }
+      const remainingQuantity = product.qty - orderProduct.orderQuantity;
+
+      if (remainingQuantity < 0) {
+        throw new Error(`Insufficient quantity for product '${product.name}'`);
+      }
+
+      updatedOrders.push({
+        product: orderProduct.product,
+        orderQuantity: orderProduct.orderQuantity,
+      });
+      product.qty = remainingQuantity;
+      await product.save();
+    }
+    return updatedOrders;
   }
 }

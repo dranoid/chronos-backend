@@ -10,6 +10,9 @@ export class Product {
 
   @Prop({ required: true })
   qty: number;
+
+  @Prop({ required: true })
+  price: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

@@ -17,10 +17,14 @@ import * as bcrypt from 'bcrypt';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { OrderProductDto } from 'src/products/dto/order-product.dto';
+import { orderItem } from 'src/products/interfaces/product.interface';
+import { ProductsService } from 'src/products/products.service';
 
 @Injectable({ scope: Scope.REQUEST }) // This allows the request object to be accessible accross the service
 export class UsersService {
   constructor(
+    private productsService: ProductsService,
     @InjectModel(User.name) private readonly usersModel: Model<User>,
     @Inject(REQUEST) private req: Request, // Dependency Injection of the request object in the class
   ) {}
@@ -66,10 +70,8 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<SerializedUser> {
     const { _id } = this.req['user'];
-    console.log('here');
     try {
       const hash = await bcrypt.hash(updateUserDto.password, 9);
-      console.log(hash);
       updateUserDto.password = hash;
       const user = await this.usersModel.findByIdAndUpdate(_id, updateUserDto, {
         new: true,
@@ -93,6 +95,42 @@ export class UsersService {
       }
 
       return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async orderProducts(orderProductDto: OrderProductDto[]) {
+    const { _id } = this.req['user'];
+    try {
+      const user = await this.usersModel.findById(_id);
+      if (!user) {
+        throw new NotFoundException();
+      }
+
+      // Perform quantity validation and update schemas
+      const updatedOrders = await this.productsService.orderValidation(
+        orderProductDto,
+      );
+
+      user.order.push({ list: updatedOrders });
+      await user.save();
+
+      return user.order;
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
+  async getOrders(): Promise<{ list: orderItem[] }[]> {
+    const { _id } = this.req['user'];
+    try {
+      const user = await this.usersModel
+        .findById(_id)
+        .populate('order.list.product', 'name description price')
+        .exec();
+      const orders = user.order;
+      return orders;
     } catch (error) {
       throw new InternalServerErrorException();
     }
@@ -134,7 +172,6 @@ export class UsersService {
     }
     const isMatch = await bcrypt.compare(password, user.password);
 
-    console.log(isMatch, password, user.password);
     if (!isMatch) {
       throw new BadRequestException('Incorrect details!');
     }

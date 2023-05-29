@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Post,
   Param,
   Patch,
   UseGuards,
@@ -14,6 +15,7 @@ import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
 import { Role } from './entities/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { OrderProductDto } from 'src/products/dto/order-product.dto';
 
 @Controller('users')
 export class UsersController {
@@ -54,9 +56,21 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me/logout')
+  @Get('me/logoutAll')
   logOutAllUserSessions() {
     return this.usersService.logOutAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/order')
+  placeOrder(@Body() orderProductDto: OrderProductDto[]) {
+    return this.usersService.orderProducts(orderProductDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/order')
+  getUserOrders() {
+    return this.usersService.getOrders();
   }
 
   // Admin

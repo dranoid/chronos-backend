@@ -1,5 +1,6 @@
+import * as mongoose from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IProduct } from 'src/products/interfaces/product.interface';
+import { orderItem } from 'src/products/interfaces/product.interface';
 import { Role } from '../entities/role.enum';
 import { Document } from 'mongoose';
 
@@ -14,8 +15,17 @@ export class User extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop()
-  order: IProduct[];
+  @Prop([
+    {
+      list: [
+        {
+          product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+          orderQuantity: Number,
+        },
+      ],
+    },
+  ])
+  order: { list: orderItem[] }[];
 
   @Prop()
   roles: Role[];

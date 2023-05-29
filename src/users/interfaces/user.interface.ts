@@ -1,11 +1,11 @@
-import { IProduct } from 'src/products/interfaces/product.interface';
+import { orderItem } from 'src/products/interfaces/product.interface';
 import { Role } from '../entities/role.enum';
 import { Exclude, Transform } from '@nestjs/class-transformer';
 export interface User {
   name: string;
   email: string;
   password: string;
-  order?: IProduct[];
+  order?: { list: orderItem[] }[];
   roles: Role[];
   tokens: { access_token: string }[];
 }
@@ -20,7 +20,7 @@ export class SerializedUser {
   @Exclude()
   password: string;
 
-  order?: IProduct[];
+  order?: { list: orderItem[] }[];
   roles: Role[];
 
   @Exclude()
