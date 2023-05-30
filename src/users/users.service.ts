@@ -31,11 +31,12 @@ export class UsersService {
     @Inject(REQUEST) private req: Request, // Dependency Injection of the request object in the class
   ) {}
 
-  async createUser({ name, email, hashedPassword }): Promise<User> {
+  async createUser({ name, email, phone, hashedPassword }): Promise<User> {
     email = email.toLowerCase();
     const newUser = new this.usersModel({
       name,
       email,
+      phone,
       password: hashedPassword,
       roles: [Role.ADMIN],
     });
@@ -103,46 +104,6 @@ export class UsersService {
   }
 
   async orderProducts(orderProductDto: OrderProductDto[]) {
-    // const { _id } = this.req['user'];
-    // try {
-    //   const user = await this.usersModel.findById(_id);
-    //   if (!user) {
-    //     throw new NotFoundException();
-    //   }
-
-    //   // Perform quantity validation and update schemas
-    //   const updatedOrders: orderItem[] =
-    //     await this.productsService.orderValidation(orderProductDto);
-
-    //   user.order.push({ list: updatedOrders });
-    //   await user.save();
-
-    //   // await user
-    //   //   .populate('order.list.product', 'name description price')
-    //   //   .execPopulate();
-
-    //   await user
-    //     .populate({
-    //       path: 'order.list.product',
-    //       select: 'name description price',
-    //     })
-    //     .execPopulate();
-
-    //   console.log(user.order[2].list[0]);
-    //   const populatedOrder = user.order.find((order) => {
-    //     return (
-    //       order.list[0].product === updatedOrders[0].product &&
-    //       order.list[1]?.product === updatedOrders[1]?.product
-    //     );
-    //   });
-    //   this.mailingService.sendOrderEmail(populatedOrder);
-
-    //   return user.order;
-    // } catch (error) {
-    //   console.log(error);
-    //   throw new BadRequestException();
-    // }
-
     const { _id } = this.req['user'];
     try {
       const user = await this.usersModel.findById(_id).lean();
@@ -177,6 +138,7 @@ export class UsersService {
       console.log(populatedOrder[0].list[0]);
 
       this.mailingService.sendOrderEmail(order, order['_id'], user);
+      this.mailingService.sendOrderSMS(user.phone, order['_id']);
 
       return populatedUser.order;
     } catch (error) {

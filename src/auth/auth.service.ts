@@ -28,12 +28,13 @@ export class AuthService {
   ): Promise<{ user: SerializedUser; access_token: string }> {
     try {
       // Save user details and hash password
-      const { password, email, name } = createUserDto;
+      const { password, email, name, phone } = createUserDto;
       const hashedPassword = await this.hashPassword(password);
       const newUser = await this.usersService.createUser({
         name,
         hashedPassword,
         email,
+        phone,
       });
       //gen auth token
       const token = await this.generateAuthToken(newUser['_id'], newUser.roles);
@@ -71,7 +72,7 @@ export class AuthService {
       const finalObj = this.usersService.sanitizeUserObj(existingUser, token);
       return finalObj;
     } catch (error) {
-      // console.log(error);
+      console.log(error);
       throw new BadRequestException();
     }
   }

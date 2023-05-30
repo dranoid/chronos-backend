@@ -5,6 +5,7 @@ export interface User {
   name: string;
   email: string;
   password: string;
+  phone: string;
   order?: { list: orderItem[] }[];
   roles: Role[];
   tokens: { access_token: string }[];
@@ -16,6 +17,7 @@ export class SerializedUser {
 
   name: string;
   email: string;
+  phone: string;
 
   @Exclude()
   password: string;

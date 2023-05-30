@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as Mailgen from 'mailgen';
+import { Twilio } from 'twilio';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Injectable()
@@ -99,5 +100,22 @@ export class EmailerService {
         console.log(e);
         throw new InternalServerErrorException();
       });
+  }
+
+  async sendOrderSMS(number = undefined, orderId) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+    const myNumber = process.env.MY_NUMBER;
+
+    const client = new Twilio(accountSid, authToken);
+
+    client.messages
+      .create({
+        from: twilioNumber,
+        to: number || myNumber,
+        body: `Your Order with ID:${orderId} has been made. You can track it on your Chronos dashboard`,
+      })
+      .then((message) => console.log(message.sid));
   }
 }
