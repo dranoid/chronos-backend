@@ -20,11 +20,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { OrderProductDto } from 'src/products/dto/order-product.dto';
 import { orderItem } from 'src/products/interfaces/product.interface';
 import { ProductsService } from 'src/products/products.service';
+import { EmailerService } from 'src/emailer/emailer.service';
 
 @Injectable({ scope: Scope.REQUEST }) // This allows the request object to be accessible accross the service
 export class UsersService {
   constructor(
     private productsService: ProductsService,
+    private mailingService: EmailerService,
     @InjectModel(User.name) private readonly usersModel: Model<User>,
     @Inject(REQUEST) private req: Request, // Dependency Injection of the request object in the class
   ) {}
@@ -101,23 +103,84 @@ export class UsersService {
   }
 
   async orderProducts(orderProductDto: OrderProductDto[]) {
+    // const { _id } = this.req['user'];
+    // try {
+    //   const user = await this.usersModel.findById(_id);
+    //   if (!user) {
+    //     throw new NotFoundException();
+    //   }
+
+    //   // Perform quantity validation and update schemas
+    //   const updatedOrders: orderItem[] =
+    //     await this.productsService.orderValidation(orderProductDto);
+
+    //   user.order.push({ list: updatedOrders });
+    //   await user.save();
+
+    //   // await user
+    //   //   .populate('order.list.product', 'name description price')
+    //   //   .execPopulate();
+
+    //   await user
+    //     .populate({
+    //       path: 'order.list.product',
+    //       select: 'name description price',
+    //     })
+    //     .execPopulate();
+
+    //   console.log(user.order[2].list[0]);
+    //   const populatedOrder = user.order.find((order) => {
+    //     return (
+    //       order.list[0].product === updatedOrders[0].product &&
+    //       order.list[1]?.product === updatedOrders[1]?.product
+    //     );
+    //   });
+    //   this.mailingService.sendOrderEmail(populatedOrder);
+
+    //   return user.order;
+    // } catch (error) {
+    //   console.log(error);
+    //   throw new BadRequestException();
+    // }
+
     const { _id } = this.req['user'];
     try {
-      const user = await this.usersModel.findById(_id);
+      const user = await this.usersModel.findById(_id).lean();
       if (!user) {
         throw new NotFoundException();
       }
 
       // Perform quantity validation and update schemas
-      const updatedOrders = await this.productsService.orderValidation(
-        orderProductDto,
-      );
+      const updatedOrders: orderItem[] =
+        await this.productsService.orderValidation(orderProductDto);
 
       user.order.push({ list: updatedOrders });
-      await user.save();
+      await this.usersModel.findByIdAndUpdate(_id, { order: user.order });
 
-      return user.order;
+      const populatedUser = await this.usersModel
+        .findById(_id)
+        .populate('order.list.product', 'name description price')
+        .lean();
+
+      // const populatedOrder = populatedUser.order.find((order) => {
+      //   return (
+      //     order.list[0].product === updatedOrders[0].product &&
+      //     order.list[1]?.product === updatedOrders[1]?.product
+      //   );
+      // });
+      // console.log(populatedOrder);
+
+      const originalOrderLength = user.order.length;
+      const populatedOrder = populatedUser.order.slice(originalOrderLength - 1);
+
+      const order = populatedOrder[0];
+      console.log(populatedOrder[0].list[0]);
+
+      this.mailingService.sendOrderEmail(order, order['_id'], user);
+
+      return populatedUser.order;
     } catch (error) {
+      console.log(error);
       throw new BadRequestException();
     }
   }

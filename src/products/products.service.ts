@@ -10,6 +10,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './schema/products.schema';
 import { OrderProductDto } from './dto/order-product.dto';
+import { orderItem } from './interfaces/product.interface';
 
 @Injectable()
 export class ProductsService {
@@ -79,14 +80,16 @@ export class ProductsService {
     return products;
   }
 
-  async orderValidation(orderProductDto: OrderProductDto[]) {
+  async orderValidation(
+    orderProductDto: OrderProductDto[],
+  ): Promise<orderItem[]> {
     // Fetch products from the database
     const productIds = orderProductDto.map(
       (orderProduct) => orderProduct.product,
     );
     const products = await this.productModel.find({ _id: { $in: productIds } });
 
-    const updatedOrders = [];
+    const updatedOrders: orderItem[] = [];
     for (const orderProduct of orderProductDto) {
       const product = products.find(
         (p) => p['_id'].toString() === orderProduct.product,

@@ -12,6 +12,7 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginUserDto } from 'src/users/dto/login-user.dto';
 import { SerializedUser } from 'src/users/interfaces/user.interface';
+import { EmailerService } from 'src/emailer/emailer.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     @InjectModel(User.name) private readonly usersModel: Model<User>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly mailingService: EmailerService,
   ) {}
 
   async createUser(
@@ -37,6 +39,8 @@ export class AuthService {
       const token = await this.generateAuthToken(newUser['_id'], newUser.roles);
       //sanitize to remove pwd
       const finalObj = this.usersService.sanitizeUserObj(newUser, token);
+      // Send welcome mail
+      this.mailingService.sendSignUpEmail(createUserDto);
       return finalObj;
     } catch (error) {
       //   console.log(error);
