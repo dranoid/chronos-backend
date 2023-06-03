@@ -3,5 +3,9 @@ Make a file called dev.env in this folder, with:
 
  MONGODB_URI = Your mongoDB connection string
  JWT_SECRET = Your jwt secret
-
-
+USER_EMAIL= the email you are sending from
+GOOGLE_MAIL_PWD= the mail password
+TWILIO_ACCOUNT_SID= the SID of your twilio account
+TWILIO_AUTH_TOKEN= Auth token from your twilio dashboard
+TWILIO_PHONE_NUMBER= phone number purchased from twilio
+MY_NUMBER=recipient number or in this case your verified twilio number
