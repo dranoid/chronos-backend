@@ -38,7 +38,7 @@ export class UsersService {
       email,
       phone,
       password: hashedPassword,
-      roles: [Role.ADMIN],
+      roles: [Role.USER],
     });
     await newUser.save();
     return newUser;
