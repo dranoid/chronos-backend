@@ -41,15 +41,15 @@ export class EmailerService {
       html: mailHtml, // HTML body content
     };
 
-    this.mailerService
-      .sendMail(message)
-      .then(() => {
-        console.log('Sent mail');
-      })
-      .catch((e) => {
-        console.log(e);
-        throw new InternalServerErrorException();
-      });
+    // this.mailerService
+    //   .sendMail(message)
+    //   .then(() => {
+    //     console.log('Sent mail');
+    //   })
+    //   .catch((e) => {
+    //     console.log(e);
+    //     throw new InternalServerErrorException();
+    //   });
   }
 
   async sendOrderEmail(order, orderId, user) {

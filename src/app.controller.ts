@@ -8,7 +8,7 @@ import { SerializedUser } from './users/interfaces/user.interface';
 export class AppController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup')
+  @Post('register')
   signupUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<{ user: SerializedUser; access_token: string }> {

@@ -12,7 +12,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
   imports: [
     UsersModule,
     ProductsModule,
-    MongooseModule.forRoot(process.env.MONGODB_URI), // The configModule in authModule is the one allowing env variables (incorrect behaviour, it's meant to be from here) find out why.
+    MongooseModule.forRoot(process.env.MONGODB_URI_DEV, {
+      dbName: 'chronosDB',
+    }), // The configModule in authModule is the one allowing env variables (incorrect behaviour, it's meant to be from here) find out why.
     AuthModule,
     EmailerModule,
     MailerModule.forRoot({
@@ -31,3 +33,4 @@ import { MailerModule } from '@nestjs-modules/mailer';
   providers: [AppService],
 })
 export class AppModule {}
+console.log('\n\n', process.env.MONGODB_URI_DEV, '\n\n');
