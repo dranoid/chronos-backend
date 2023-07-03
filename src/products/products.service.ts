@@ -28,8 +28,28 @@ export class ProductsService {
     }
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(page: number, limit: number): Promise<any> {
     try {
+      const items = await this.productModel.find();
+      if (page && limit && limit > 0 && page > 0) {
+        if (limit > items.length) {
+          limit = items.length;
+        }
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedData = items.slice(startIndex, endIndex);
+
+        const totalItems = items.length;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        return {
+          items: paginatedData,
+          totalItems,
+          totalPages,
+          currentPage: page,
+          limit,
+        };
+      }
       return await this.productModel.find();
     } catch (e) {
       throw new InternalServerErrorException();
@@ -39,7 +59,7 @@ export class ProductsService {
   async findOne(id: string): Promise<Product> {
     try {
       const product = await this.productModel.findById(id);
-      if (!product) throw new NotFoundException('User not found');
+      if (!product) throw new NotFoundException('Product not found');
       return product;
     } catch (e) {
       throw new InternalServerErrorException();
@@ -58,7 +78,7 @@ export class ProductsService {
           new: true,
         },
       );
-      if (!product) throw new NotFoundException('User not found');
+      if (!product) throw new NotFoundException('Item not found');
       return product;
     } catch (e) {
       throw new BadRequestException();
@@ -68,7 +88,7 @@ export class ProductsService {
   async remove(id: string): Promise<Product> {
     try {
       const product = await this.productModel.findByIdAndDelete(id);
-      if (!product) throw new NotFoundException('User not found');
+      if (!product) throw new NotFoundException('Item not found');
       return product;
     } catch (e) {
       throw new InternalServerErrorException();

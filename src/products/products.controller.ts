@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Query,
   Param,
   Delete,
   UseGuards,
@@ -16,6 +17,7 @@ import { Roles } from 'src/users/roles.decorator';
 import { RolesGuard } from 'src/users/roles.guard';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { Product } from './schema/products.schema';
+import { PaginationDto } from 'src/products/dto/pagination.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -30,8 +32,9 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(): Promise<Product[]> {
-    return this.productsService.findAll();
+  findAll(@Query() paginationDto: PaginationDto): Promise<Product[]> {
+    const { page, limit } = paginationDto;
+    return this.productsService.findAll(+page, +limit);
   }
 
   @UseGuards(JwtAuthGuard)

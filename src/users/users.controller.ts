@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Param,
+  Query,
   Patch,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { RolesGuard } from './roles.guard';
 import { Role } from './entities/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { OrderProductDto } from 'src/products/dto/order-product.dto';
+import { PaginationDto } from 'src/products/dto/pagination.dto';
 
 @Controller('users')
 export class UsersController {
@@ -25,8 +27,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get()
-  getAllUsers(): Promise<SerializedUser[]> {
-    return this.usersService.getAllUsers();
+  getAllUsers(
+    @Query() paginationDto: PaginationDto,
+  ): Promise<SerializedUser[]> {
+    const { page, limit } = paginationDto;
+    return this.usersService.getAllUsers(+page, +limit);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -80,5 +85,21 @@ export class UsersController {
   @Get(':id')
   getOneUser(@Param('id') id: string) {
     return this.usersService.getUser(id);
+  }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id')
+  updateUser(
+    @Body() updateUserDto: UpdateUserDto,
+    @Param('id') id: string,
+  ): Promise<SerializedUser> {
+    return this.usersService.updateUser(id, updateUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  deleteUser(@Param('id') id: string): Promise<SerializedUser> {
+    return this.usersService.deleteSingleUser(id);
   }
 }

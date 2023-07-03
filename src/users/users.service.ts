@@ -74,9 +74,33 @@ export class UsersService {
   ): Promise<SerializedUser> {
     const { _id } = this.req['user'];
     try {
-      const hash = await bcrypt.hash(updateUserDto.password, 9);
-      updateUserDto.password = hash;
+      if (updateUserDto.password) {
+        const hash = await bcrypt.hash(updateUserDto.password, 9);
+        updateUserDto.password = hash;
+      }
       const user = await this.usersModel.findByIdAndUpdate(_id, updateUserDto, {
+        new: true,
+      });
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
+  async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<SerializedUser> {
+    try {
+      if (updateUserDto.password) {
+        const hash = await bcrypt.hash(updateUserDto.password, 9);
+        updateUserDto.password = hash;
+      }
+      const user = await this.usersModel.findByIdAndUpdate(id, updateUserDto, {
         new: true,
       });
       if (!user) {
@@ -93,6 +117,19 @@ export class UsersService {
     const { _id } = this.req['user'];
     try {
       const user = await this.usersModel.findByIdAndDelete(_id);
+      if (!user) {
+        throw new UnauthorizedException();
+      }
+
+      return this.sanitizeNoToken(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async deleteSingleUser(id: string): Promise<SerializedUser> {
+    try {
+      const user = await this.usersModel.findByIdAndDelete(id);
       if (!user) {
         throw new UnauthorizedException();
       }
@@ -211,19 +248,49 @@ export class UsersService {
     const sUser = plainToClass(SerializedUser, user.toObject());
     return { user: sUser, access_token: token };
   }
-  sanitizeUsers(users: User[]): SerializedUser[] {
-    const sanitized = users.map((user) =>
-      plainToClass(SerializedUser, user.toObject()),
-    );
-    return sanitized;
+  sanitizeUsers(
+    users: User[] | undefined,
+    paginated = false,
+    paginatedData = [],
+  ): SerializedUser[] {
+    if (paginated) {
+      const sanitizedPaginated = paginatedData.map((user) =>
+        plainToClass(SerializedUser, user.toObject()),
+      );
+      return sanitizedPaginated;
+    } else {
+      const sanitized = users.map((user) =>
+        plainToClass(SerializedUser, user.toObject()),
+      );
+      return sanitized;
+    }
   }
 
   sanitizeNoToken(user: User): SerializedUser {
     return plainToClass(SerializedUser, user.toObject());
   }
 
-  async getAllUsers(): Promise<SerializedUser[]> {
+  async getAllUsers(page: number, limit: number): Promise<any> {
     const users = await this.usersModel.find();
+    if (page && limit && limit > 0 && page > 0) {
+      if (limit > users.length) {
+        limit = users.length;
+      }
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedData = users.slice(startIndex, endIndex);
+
+      const totalItems = users.length;
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        users: this.sanitizeUsers(undefined, true, paginatedData),
+        totalItems,
+        totalPages,
+        currentPage: page,
+        limit,
+      };
+    }
     return this.sanitizeUsers(users);
   }
 }
