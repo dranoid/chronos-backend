@@ -160,27 +160,17 @@ export class UsersService {
         .populate('order.list.product', 'name description price')
         .lean();
 
-      // const populatedOrder = populatedUser.order.find((order) => {
-      //   return (
-      //     order.list[0].product === updatedOrders[0].product &&
-      //     order.list[1]?.product === updatedOrders[1]?.product
-      //   );
-      // });
-      // console.log(populatedOrder);
-
       const originalOrderLength = user.order.length;
       const populatedOrder = populatedUser.order.slice(originalOrderLength - 1);
 
       const order = populatedOrder[0];
-      console.log(populatedOrder[0].list[0]);
 
       this.mailingService.sendOrderEmail(order, order['_id'], user);
       this.mailingService.sendOrderSMS(user.phone, order['_id']);
 
       return populatedUser.order;
     } catch (error) {
-      console.log(error);
-      throw new BadRequestException();
+      throw new BadRequestException(error);
     }
   }
 

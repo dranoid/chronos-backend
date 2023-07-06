@@ -41,19 +41,15 @@ export class EmailerService {
       html: mailHtml, // HTML body content
     };
 
-    // this.mailerService
-    //   .sendMail(message)
-    //   .then(() => {
-    //     console.log('Sent mail');
-    //   })
-    //   .catch((e) => {
-    //     console.log(e);
-    //     throw new InternalServerErrorException();
-    //   });
+    this.mailerService
+      .sendMail(message)
+      .then()
+      .catch((e) => {
+        throw new InternalServerErrorException(e);
+      });
   }
 
   async sendOrderEmail(order, orderId, user) {
-    console.log(order, 'here');
     const productList = order.list.map((item) => {
       const obj = {
         name: item.product.name,
@@ -63,8 +59,6 @@ export class EmailerService {
       obj['quantity ordered'] = item.orderQuantity;
       return obj;
     });
-
-    console.log(productList);
 
     const emailObj = {
       body: {
@@ -93,12 +87,9 @@ export class EmailerService {
 
     this.mailerService
       .sendMail(message)
-      .then(() => {
-        console.log('Sent mail');
-      })
+      .then()
       .catch((e) => {
-        console.log(e);
-        throw new InternalServerErrorException();
+        throw new InternalServerErrorException(e);
       });
   }
 
@@ -113,9 +104,9 @@ export class EmailerService {
     client.messages
       .create({
         from: twilioNumber,
-        to: number || myNumber,
-        body: `Your Order with ID:${orderId} has been made. You can track it on your Chronos dashboard`,
+        to: myNumber || number,
+        body: `Your Order with ID:${orderId} has been made. You can track it on your Chronos profile`,
       })
-      .then((message) => console.log(message.sid));
+      .then();
   }
 }

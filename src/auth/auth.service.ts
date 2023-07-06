@@ -44,7 +44,6 @@ export class AuthService {
       this.mailingService.sendSignUpEmail(createUserDto);
       return finalObj;
     } catch (error) {
-      //   console.log(error);
       if (
         error.code == 11000 &&
         error.keyPattern &&
@@ -52,7 +51,7 @@ export class AuthService {
       ) {
         throw new ConflictException('Email already exists');
       } else {
-        throw new BadRequestException();
+        throw new BadRequestException(error);
       }
     }
   }
@@ -72,8 +71,7 @@ export class AuthService {
       const finalObj = this.usersService.sanitizeUserObj(existingUser, token);
       return finalObj;
     } catch (error) {
-      console.log(error);
-      throw new BadRequestException();
+      throw new BadRequestException(error);
     }
   }
 
